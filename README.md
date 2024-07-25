@@ -50,6 +50,7 @@ func main(){
 ## Describe Functional Programming With GOLANG.
 
 A function takes another Fuction as Arguments : Function as First Class Citigen
+```go
 func transformer(numbers []int,  trans func(int)int) (returnedValues []int){
     res:=make([]int, len(numbers))
     for i,v:=range numbers{
@@ -57,16 +58,18 @@ func transformer(numbers []int,  trans func(int)int) (returnedValues []int){
     }
     return res
 }
+```
 In this Code Blocks transformer is a function which takes 2 arguments one is integer array another is a function which take int as arguments and returned int.
 transformer function return an array of Int.
-
+```go
 func adder(x int) func(int)int{
     return func(y int) int{
         x+y
     }
 }
-In this Code Block adder is a function which return another Function. the anonymous function just add the argument of adder function with the argument of anonymous function.
+```
 
+```go
 func main(){
     numbers:=[]int{2,4,8,16}
     doub:=transformer(numbers, func(x int)int{
@@ -82,4 +85,4 @@ func main(){
     add12(2)
     add12(5)
 }
-
+```
