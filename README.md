@@ -157,7 +157,22 @@ func main(){
 ```
 ## Describe Map Synchronisation.
 - In Go (Golang), maps are not inherently safe for concurrent access by multiple goroutines. If one goroutine is writing to a map while another goroutine is reading from or writing to the same map concurrently, it can result in unpredictable behavior or panics. They require synchronization mechanisms such as mutexes to ensure safe concurrent read and write operations.
+```go
+var m map[string]int
+var mu sync.Mutex 
+// var mu sync.RWMutex : It allows multiple goroutines to read the map simultaneously but ensures exclusive access for writes.
 
+// Writing to map
+mu.Lock()
+m["key"] = 123
+mu.Unlock()
+
+// Reading from map
+mu.Lock() 
+// mu.RLock() : Acquires a read lock. Multiple goroutines can hold a read lock simultaneously, allowing for concurrent read access to a shared resource.
+value := m["key"]
+mu.Unlock() // mu.RUnlock(
+```
 ```go
 package main
 
