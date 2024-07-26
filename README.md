@@ -23,7 +23,8 @@
 ```go
 func main(){
     /*
-    x_name is a Function which can assigned to a V variable, x_name fuction return y_name function. c is defined at x_name block, y_name function can access/refrence c. 
+    x_name is a Function which can assigned to a V variable, x_name fuction return y_name function. 
+    //c is defined at x_name block, y_name function can access/refrence c. 
 
     v:=func x_name(_no_arguments_) func y_name(_no_arguments_) (return_type int){
         c:=0
@@ -183,6 +184,11 @@ func main(){
 ```
 ## Describe Map Synchronisation.
 - In Go (Golang), maps are not inherently safe for concurrent access by multiple goroutines. If one goroutine is writing to a map while another goroutine is reading from or writing to the same map concurrently, it can result in unpredictable behavior or panics. They require synchronization mechanisms such as mutexes to ensure safe concurrent read and write operations.
+
+![Screenshot from 2024-07-26 13-00-11](https://github.com/user-attachments/assets/f0286ec3-e3fd-4577-83bb-fdda90f1892c)
+![Screenshot from 2024-07-26 13-03-33](https://github.com/user-attachments/assets/4399f402-d98f-4020-b2da-8cce57dae741)
+![Screenshot from 2024-07-26 13-09-40](https://github.com/user-attachments/assets/5e3e7431-3e03-4351-9778-e299076dabe5)
+![Screenshot from 2024-07-26 13-18-34](https://github.com/user-attachments/assets/36c2f9d3-c71e-420a-a15f-cdd3822a137e)
 
 ```go
 package main
