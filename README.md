@@ -125,17 +125,43 @@ func doSomething(i int)float{
 -  Pointer receivers directly operate on the instance, which is more memory-efficient and can result in faster execution, especially for large structs.
 
 ## Describe Concurency Primitives in GOlang.
-Concurency Primitives are fundamental tools or mechanism provided by programming languages to help, manage and control the eecution behaviours of concutent tasks.
+Concurency Primitives are fundamental tools or mechanism provided by programming languages to help, manage and control the execution behaviours of concutent tasks.
 
 Some common Concurency Primitives are Mutex, Semaphore, Channels etc.
 
-- Mutex are used to protect shared Resources such as Variables and Structures, from being accessed simultaneously by Multiple threads or goroutines. Mutex in golang use Lock and Unlock function call to Lock and Unlock shared Resources to Protect access.
+- Mutex 
+    - Mutex are used to protect shared Resources such as Variables and Structures, from being accessed simultaneously by Multiple threads or goroutines. 
+    - Mutex in golang use Lock and Unlock function call to Lock and Unlock shared Resources to Protect access.
+```go
+// Here in this Example we try to Synchronize MAP 
+var m map[string]int
+var mu sync.Mutex 
+// var mu sync.RWMutex : It allows multiple goroutines to read the map simultaneously but ensures exclusive access for writes.
 
-- Semaphore is essentially a Counter that can be Decremented when a thrade wants to Enter a critical section or access a shared resources.  If the semaphore's value is greater than zero (> 0), the semaphore decrements its value (semaphore_value--) and allows the thread to proceed. If the semaphore's value is zero (== 0), the thread is blocked (put into a waiting state) until the semaphore's value becomes positive.
+// Writing to map
+mu.Lock()
+m["key"] = 123
+mu.Unlock()
 
-And Increemnted when hrade wants to Exit a critical section or completed access a shared resources. This operation increments the semaphore's value (semaphore_value++). If there are threads waiting (blocked on P), it unblocks one of them, allowing it to proceed.
+// Reading from map
+mu.Lock() 
+// mu.RLock() : Acquires a read lock. Multiple goroutines can hold a read lock simultaneously, allowing for concurrent read access to a shared resource.
+value := m["key"]
+mu.Unlock() // mu.RUnlock(
 
-- Channels are Higher level concurency primitive, facilitate communication and synchronisation between Concurrent threads or goroutines by allowing them to Send and Receive values. Channels help prevent race conditions by ensuring that only one goroutine can access data at a time. Channels can be buffered, allowing goroutines to send multiple values without blocking until the buffer is full. This can improve performance in scenarios where the producer and consumer operate at different speeds. 
+```
+
+- Semaphore is an integer Counter.
+    - Counter can be Decremented when a thrade wants to Enter a critical section or access a shared resources.
+    -  If the semaphore's value is greater than zero (> 0), the semaphore decrements its value (semaphore_value--) and allows the thread to proceed. 
+    - If the semaphore's value is zero (== 0), the thread is blocked (put into a waiting state) until the semaphore's value becomes positive.
+    - And Increemnted when Thrade wants to Exit a critical section or completed access a shared resources. This operation increments the semaphore's value (semaphore_value++). 
+    - If there are threads waiting (blocked on P), it unblocks one of them, allowing it to proceed.
+
+- Channels 
+    - Channels are Higher level concurency primitive, facilitate communication and synchronisation between Concurrent threads or goroutines by allowing them to Send and Receive values. 
+    - Channels help prevent race conditions by ensuring that only one goroutine can access data at a time. 
+    - Channels can be buffered, allowing goroutines to send multiple values without blocking until the buffer is full. This can improve performance in scenarios where the producer and consumer operate at different speeds. 
 
 ## How you use WaitGroup?
 - wg.Add(1) increments the WaitGroup counter before each goroutine starts. 
@@ -157,22 +183,7 @@ func main(){
 ```
 ## Describe Map Synchronisation.
 - In Go (Golang), maps are not inherently safe for concurrent access by multiple goroutines. If one goroutine is writing to a map while another goroutine is reading from or writing to the same map concurrently, it can result in unpredictable behavior or panics. They require synchronization mechanisms such as mutexes to ensure safe concurrent read and write operations.
-```go
-var m map[string]int
-var mu sync.Mutex 
-// var mu sync.RWMutex : It allows multiple goroutines to read the map simultaneously but ensures exclusive access for writes.
 
-// Writing to map
-mu.Lock()
-m["key"] = 123
-mu.Unlock()
-
-// Reading from map
-mu.Lock() 
-// mu.RLock() : Acquires a read lock. Multiple goroutines can hold a read lock simultaneously, allowing for concurrent read access to a shared resource.
-value := m["key"]
-mu.Unlock() // mu.RUnlock(
-```
 ```go
 package main
 
