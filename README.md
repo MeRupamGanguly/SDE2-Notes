@@ -128,7 +128,9 @@ func doSomething(i int)float{
 ## Describe Concurency Primitives in GOlang.
 Concurency Primitives are fundamental tools or mechanism provided by programming languages to help, manage and control the execution behaviours of concutent tasks.
 
-Some common Concurency Primitives are Mutex, Semaphore, Channels etc.
+- When Communication and Synchronisation between Go-Routines are Priority then Choose Channel. When Protecting Shared-Resources is Priority then Choose Mutex. When Limiting access to a Pool of Resources(Comapny have only 3 Printers for 25 Computers) then Choose Semaphore.
+
+Some common Concurency Primitives are Mutex, Semaphore, Channels, Atomic etc.
 
 - Mutex 
     - Mutex are used to protect shared Resources such as Variables and Structures, from being accessed simultaneously by Multiple threads or goroutines. 
@@ -163,6 +165,12 @@ mu.Unlock() // mu.RUnlock(
     - Channels are Higher level concurency primitive, facilitate communication and synchronisation between Concurrent threads or goroutines by allowing them to Send and Receive values. 
     - Channels help prevent race conditions by ensuring that only one goroutine can access data at a time. 
     - Channels can be buffered, allowing goroutines to send multiple values without blocking until the buffer is full. This can improve performance in scenarios where the producer and consumer operate at different speeds. 
+
+- Atomic 
+    - Atomic Operations are used on Primitive Data Types like int32,float64, Uint64 etc. Mainly use on Incrementing/Updates Counters/Flags. Atomic Opertaions are Lock free and Efficient for Primitives Data-types only.
+
+- Condition Variables
+    - Condition variables allow threads to wait until a certain condition is true before proceeding. They are typically used in conjunction with mutexes to manage complex synchronization patterns.
 
 ## How you use WaitGroup?
 - wg.Add(1) increments the WaitGroup counter before each goroutine starts. 
@@ -232,13 +240,139 @@ func mapConsumer(testMap *map[string]string, wg *sync.WaitGroup, mu *sync.RWMute
 func mapWriter(testMap *map[string]string, wg *sync.WaitGroup, mu *sync.RWMutex) {
 	defer wg.Done()
 	for i := 0; i < 10; i++ {
-		// Go does not allow you to use range directly on a pointer to a map because it expects a map type.
-		// you need to dereference the pointer to get the actual map value, and then you can range over it.
 		mu.Lock()
 		vTestMap := *testMap
 		vTestMap["Agni"] = fmt.Sprint("Jal", i)
 		testMap = &vTestMap
 		mu.Unlock()
+	}
+}
+```
+
+## Describe Channel Comunication
+- `<-` this syntax is used fro Sends Value into Channel.
+- `:=<-`  this syntax is used fro Receives Value from Channel.
+```go
+package main
+
+import (
+	"fmt"
+	"sync"
+	"time"
+)
+
+func producer(ch chan<- int, wg *sync.WaitGroup) {
+	fmt.Println("Producer Call")
+	for i := 0; i < 9; i++ {
+		time.Sleep(time.Second)
+		ch <- i
+	}
+	close(ch) // If we do not close the channel then Deadlock occured as Reader continiously try to read from channel until closed.
+	wg.Done()
+}
+func consumer(ch <-chan int, wg *sync.WaitGroup) {
+	fmt.Println("Consumer Call")
+	for data := range ch {
+		fmt.Println(data)
+	}
+	wg.Done()
+}
+func main() {
+	ch := make(chan int)
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go producer(ch, &wg)
+	go consumer(ch, &wg)
+	fmt.Println("Done")
+	wg.Wait()
+}
+```
+
+## Describe uses of Select in Golang.
+Assume a development scenerio where we have 3 s3 Buckets. We spawn 3 GO-Routines each one uploading a File on each S3 bucket at same time. We have to Return SignedUrl of the file so user can stream the File as soon as possible. Now we do not have to wait for 3 S3 Upload operation, when one s3 upload done we can send the SignedUrl of the File to the User so he can Stream. And Other two S3 Upload will continue at same time. This is the Scenerio when Select Statement will work as a Charm.
+
+Select Block Main Execution, untils one of its case completed. If multiple case completes at same time then Randomly one case is seclected for Output and Select block will complete.
+
+```go
+package main
+
+import (
+	"fmt"
+	"math/rand"
+	"time"
+)
+
+func main() {
+	ch1 := make(chan int)
+	ch2 := make(chan int)
+	go func() {
+		rand.NewSource(time.Now().Unix())
+		i := rand.Intn(6)
+		fmt.Println("ch1 Rand ", i)
+		time.Sleep(time.Duration(i) * time.Second)
+		ch1 <- 1
+	}()
+	go func() {
+		rand.NewSource(time.Now().Unix())
+		i := rand.Intn(6)
+		fmt.Println("ch2 Rand ", i)
+		time.Sleep(time.Second * time.Duration(i))
+		ch2 <- 2
+	}()
+
+	select {
+	case <-ch1:
+		fmt.Print("ch1 is Done")
+	case <-ch2:
+		fmt.Print("ch2 is Done")
+	case <-time.After(time.Second * time.Duration(4)):
+		fmt.Print("Context Expire")
+	}
+}
+```
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"math/rand"
+	"time"
+)
+
+func coreProcess(ctx context.Context, i int, ch chan<- int) {
+	rand.NewSource(time.Now().Unix())
+	r := rand.Intn(4)
+	t := time.Duration(r) * time.Second
+	ctx, cancel := context.WithTimeout(ctx, t)
+	defer cancel()
+	fmt.Printf("Doing Some Work for Process: %d with random %d", i, r)
+	fmt.Println()
+	select {
+	case <-time.After(t): //Send 1 via Channel to Caller Function After Wait for Random Seconds.
+		ch <- 1
+	case <-ctx.Done(): // If context expire then send 0 via Channel to Caller Function
+		ch <- 0
+	}
+
+}
+func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	ch := make(chan int)
+	defer close(ch)
+	for i := 0; i < 6; i++ { // Calling CoreProcess concurently 6 times.
+		go coreProcess(ctx, i, ch)
+	}
+	// gather result from al Concurent Processes.
+	for i := 0; i < 6; i++ {
+		select {
+		case res := <-ch: // To store it a res is important , otherwise in Print statement channel read twice
+			fmt.Println(res) // fmt.Println(<-ch)  X:Wrong Syntax
+		case <-ctx.Done():
+			fmt.Println("Context Done")
+		}
 	}
 }
 ```
