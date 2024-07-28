@@ -1,7 +1,7 @@
 # SDE2-Notes
 
 ## Introduce Yourself.
-- I have a background in BTech IT, passout of 2020. After College I joined Sensibol as a GOlang Backed Developer. My Primary role involved Developing Microservices for Our Clients such as PDL and SingShala. We use Golang MongoDB AWS for Building Robust and Scalable Bussiness Logics. I Resigned in April as my Father Diagonises with CANCER, Now He is Well and Now I Seeking new Opportunities.
+- I have a background in BTech IT, passout of 2020. After College I joined Sensibol as a GOlang Backed Developer. My Primary role was Developing Microservices for Our Clients such as PDL and SingShala. We use Golang MongoDB AWS for Building Robust and Scalable Bussiness Logics. I Resigned in April as my Father Treatments of CANCER, Now He is Well and Now I Seeking new Opportunities.
 
 ## What are Advantages and Disadvantages of Monolith and Microservices?
 - Microservices are Better for BIG project Structure where Scalling and Almost ZERO Downtime required. Fixing Bug and Maintain Large Code base is easy with Microservices. Only Disadvantages of Microservice is Inter Service Network Call which can produce sometime Slow Response time.
@@ -355,7 +355,6 @@ func coreProcess(ctx context.Context, i int, ch chan<- int) {
 	case <-ctx.Done(): // If context expire then send 0 via Channel to Caller Function
 		ch <- 0
 	}
-
 }
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -375,4 +374,97 @@ func main() {
 		}
 	}
 }
+```
+
+## What are SOLID Principles.
+- SOLID principles are guidelines for Designing Code-base that are easy to understand, maintain and extend over time.
+
+- Single Responsibility: A Struct/Class should have only a single reason to change. Fields of Book and Fields of Author should be on Different struct. 
+
+```go
+type Book struct{
+  ISIN string
+  Name String
+  AuthorID string
+}
+type Author struct{
+  ID string
+  Name String
+}
+```
+Assume One Author decided later, he does not want to Disclose its Real Name to Spread. So we can Serve Frontend by Alias instead of Real Name. Without Changing Book Class/Struct, we can add Alias in Author Struct. By that, Existing Authors present in DB will not be affected as Frontend will Change Name only when it Founds that Alias field is not empty.
+```go
+type Book struct{
+  ISIN string
+  Name String
+  AuthorID string
+}
+type Author struct{
+  ID string
+  Name String
+  Alias String
+}
+```
+- Open/Closed: Coding Components like Struct, Functions etc should be Open for Extension but Closed for Modification. This principle encourages us to design our systems in a way that allows new functionality to be added without changing existing code.
+
+```go
+type Shape interface{
+	Area() float64
+}
+type Rectangle struct{
+	W float64
+	H float64
+}
+type Circle struct{
+	R float64
+}
+```
+Now we want to Calculate Area of Rectangle and Circle, so Rectangle and Circle both can Implements Shape Interface by Write Body of the Area() Function.
+```go
+func (r Rectangle) Area()float64{
+	return r.W * r.H
+}
+func (c Circle)Area()float64{
+	return 3.14 * c.R * c.R
+}
+```
+Now we can create a Function PrintArea() which take Shape as Arguments and Calculate Area of that Shape. So here Shape can be Rectangle, Circle. In Future we can add Triangle Struct which implements Shape interface by writing Body of Area. Now Traingle can be passed to PrintArea() with out modifing the PrintArea() Function.
+```go
+func PrintArea(shape Shape) {
+	fmt.Printf("Area of the shape: %f\n", shape.Area())
+}
+```
+```go
+// In Future
+type Triangle struct{
+	B float64
+	H float54
+}
+func (t Triangle)Area()float64{
+	return 1/2 * t.B * t.H
+}
+```
+```go
+func main(){
+	rect:= Rectangle{W:5,H:3}
+	cir:=Circle{R:3}
+	PrintArea(rect)
+	PrintArea(cir)
+	// In Future
+	tri:=Triangle{B:4,H:8}
+	PrintArea(tri)
+}
+```
+- Liskov Substitution: Objects of a Super Calss should be Replacable with Objects of its Sub Classes without affecting the correctness of the Program.
+```go
+type Bird interface{
+	Fly() string
+}
+type Sparrow struct{
+	Name string
+}
+type Penguin struct{
+	Name string
+}
+
 ```
