@@ -250,8 +250,8 @@ func mapWriter(testMap *map[string]string, wg *sync.WaitGroup, mu *sync.RWMutex)
 ```
 
 ## Describe Channel Comunication
-- `<-` this syntax is used fro Sends Value into Channel.
-- `:=<-`  this syntax is used fro Receives Value from Channel.
+- `<-` this syntax is used for Sends Value into Channel.
+- `:=<-`  this syntax is used for Receives Value from Channel.
 ```go
 package main
 
@@ -379,6 +379,13 @@ func main() {
 ## What are SOLID Principles.
 - SOLID principles are guidelines for Designing Code-base that are easy to understand, maintain and extend over time.
 
+Main Points to Remeber are: 
+1. Struct have only those fields which are strictly copuled, decoupled fields can be on another strictly copuled Struct. 
+2. New features can be added without changing old features/Functions. 
+3. Obeject of Superclass can be replacable by its subclass instances, without affecting corectness of the features.
+4. Strcut should only implements what it really needs, instead of unrequired methods, so do not club different decouplable interfaces. 
+5. Classes rely on interfaces instead of specific Implementations, that way we can achive tech-stack-migrations easily.
+
 - Single Responsibility: A Struct/Class should have only a single reason to change. Fields of Book and Fields of Author should be on Different struct. 
 
 ```go
@@ -455,7 +462,7 @@ func main(){
 	PrintArea(tri)
 }
 ```
-- Liskov Substitution: Objects of a Super Calss should be Replacable with Objects of its Sub Classes without affecting the correctness of the Program.
+- Liskov Substitution: Objects of a Super Class should be Replacable with Objects of its Sub Classes without affecting the correctness of the Program.
 ```go
 type Bird interface{
 	Fly() string
@@ -466,5 +473,402 @@ type Sparrow struct{
 type Penguin struct{
 	Name string
 }
+```
+Sparrow and Pengin both are Bird, But Sparrow can Fly, Penguin Not. ShowFly() function take argument of Bird type and call Fly() function. Now as Penguin and Sparrow both are types of Bird, they should be passed as Bird within ShowFly() function.
+```go
+func (s Sparrow) Fly() string{
+	return "Sparrow is Flying"
+}
+func (p Penguin) Fly() string{
+	return "Penguin Can Not Fly"
+}
+```
+```go
+func ShowFly(b Bird){
+	fmt.Println(b.Fly())
+}
+func main() {
+	sparrow := Sparrow{Name: "Sparrow"}
+	penguin := Penguin{Name: "Penguin"}
+  // SuperClass is Bird,  Sparrow, Penguin are the SubClass
+	ShowFly(sparrow)
+	ShowFly(penguin)
+}
+```
+- Interface Segregation: Class should not be forced to Depends on Interfaces they do not want to use or Implements.  If we use a normal Printer machine, which Need only Print() function then that Struct/Class only implements Printer interface instead of NewTypeOfDevice interface.
 
+```go
+// The Printer interface defines a contract for printers with a Print method.
+type Printer interface {
+	Print()
+}
+// The Scanner interface defines a contract for scanners with a Scan method.
+type Scanner interface {
+	Scan()
+}
+// The NewTypeOfDevice interface combines Printer and Scanner interfaces for New type of devices which can Print and Scan with it new invented Hardware.
+type NewTypeOfDevice interface {
+	Printer
+	Scanner
+}
+```
+- Dependency Inversion: Classes depends on Interfaces not Implementations. Thats help Decoupling. That means if we change Our Primary Dtabase SQL to MongoDB then our Service layer should not be touched, only Repository layer Changes by Implementing Repository Interfaces, and Main file change where we create Mongodb Connection.
+```go
+// The MessageSender interface defines a contract for sending messages with a SendMessage method.
+type MessageSender interface {
+	SendMessage(msg string) error
+}
+// EmailSender and SMSClient structs implement the MessageSender interface with their respective SendMessage methods.
+type EmailSender struct{}
+
+func (es EmailSender) SendMessage(msg string) error {
+	fmt.Println("Sending email:", msg)
+	return nil
+}
+type SMSClient struct{}
+
+func (sc SMSClient) SendMessage(msg string) error {
+	fmt.Println("Sending SMS:", msg)
+	return nil
+}
+type NotificationService struct {
+	Sender MessageSender
+}
+```
+The NotificationService struct depends on MessageSender interface, not on concrete implementations (EmailSender or SMSClient). This adheres to Dependency Inversion, because high-level modules (NotificationService) depend on abstractions (MessageSender) rather than details.
+```go
+
+func (ns NotificationService) SendNotification(msg string) error {
+	return ns.Sender.SendMessage(msg)
+}
+func main() {
+	emailSender := EmailSender{}
+	smsClient := SMSClient{}
+
+	emailNotification := NotificationService{Sender: emailSender}
+	smsNotification := NotificationService{Sender: smsClient}
+
+	emailNotification.SendNotification("Hello, this is an email notification!")
+	smsNotification.SendNotification("Hello, this is an SMS notification!")
+}
+```
+## What are the different Design Patterns you know and Explain each with GOLANG.
+- Sigleton: Singleton pattern ensures a Class/Struct has only one Instance. And provide a global point of access to that instance.
+That instance should be designed to be Thread-safe so Multiple go-routines can acess it concurently without create multiple instances of the Class.
+Global Configs, Database Conncection, Logging service, are where we can use Singleton approach.
+
+```go
+type Config struct{
+	configs map[string] string
+}
+var (
+	confs *Config
+	once sync.Once
+)
+func (c *Config) initConfig() {
+    // Load configuration settings from file, database, etc.
+    c.configs["server_address"] = "localhost"
+    c.configs["port"] = "8080"
+    // Add more configuration settings as needed
+}
+
+// GetConfigManager returns the singleton instance of ConfigManager.
+// sync.Once ensures that, the initialization code, inside once.Do() is executed exactly once, 
+//  preventing multiple initializations even with concurrent calls.
+func GetConfigs() *Config{
+	once.Do(func(){obj=&Config{configs:make(map[string]string)}})
+	obj.initConfig()
+}
+
+// GetConfig retrieves a specific configuration setting.
+func (cm *ConfigManager) GetConfig(key string) string {
+    return cm.config[key]
+}
+
+func main() {
+    // Get the singleton instance of ConfigManager
+    configManager := GetConfigManager()
+
+    // Access configuration settings
+    fmt.Println("Server Address:", configManager.GetConfig("server_address"))
+    fmt.Println("Port:", configManager.GetConfig("port"))
+}
+```
+- Builder: Construct/Builds Complex objects Step by Step.
+```go
+type Product struct{ // The Complex Object we want to Build and give back as a Response to our Primary API.
+	Part_1 interface{}
+	part_2 interface{}
+	part_3 string
+	part_4 bool
+}
+```
+```go
+type Builder interface{ // The Contracts use for building the Complex Product.
+	set_part_1(uddt type interface{}) (resp interface{}, err error)
+	set_part_2(uddt type interface{}) (resp interface{}, err error)
+	set_part_3(uddt type interface{}) (resp string, err error)
+	set_part_4(uddt type interface{}) (resp bool, err error)
+	Build()Product
+}
+// the class which gonna implements Contracts
+type service struct{  } 
+
+func (svc *service) set_part_1(uddt type interface{}) (resp interface{}, err error) {
+	fmt.Println("part_1 computation done")
+	var ifs interface{}
+	ifs = "Verify Complete"
+	return ifs,nil
+}
+func (svc *service) set_part_2(uddt type interface{}) ( interface{},  error) {
+	fmt.Println("part_2 computation done")
+	var ifs interface{}
+	ifs = "Downloading Complete"
+	return ifs,nil
+}
+func (svc *service) set_part_3(uddt type interface{}) (resp string, err error) {
+	fmt.Println("part_3 computation done")
+	return "Converting completed",nil
+}
+func (svc *service) set_part_4(uddt type interface{}) (resp bool, err error)  {
+	fmt.Println("part_4 computation done")
+	return  true,nil
+}
+func (svc *service)Build()Product{
+
+	var ifs_part_1 interface{}
+	ifs_part_1="Input for Part_1"
+	resp_part_1,_:=svc.set_part_1(ifs_part_1)
+
+	var ifs_part_2 interface{}
+	ifs_part_2="Input for Part_2"
+	resp_part_2,_:=svc.set_part_2(ifs_part_2)
+
+	var ifs_part_3 interface{}
+	ifs_part_3="Input for Part_3"
+	resp_part_3,_:=svc.set_part_3(ifs_part_3)
+
+	var ifs_part_4 interface{}
+	ifs_part_4="Input for Part_4"
+	resp_part_4,_:=svc.set_part_1(ifs_part_4)
+
+	return Product{
+		Part_1:resp_part_1,
+		Part_2:resp_part_2,
+		Part_3:resp_part_3,
+		Part_4:resp_part_4,
+	}
+}
+```
+```go
+type Director struct{
+	builder Builder
+}
+func NewDirector(builder Builder) *Director{
+	return &Director{builder: builder}
+}
+func (d *Director) Run() Product{
+	return d.builder.Build()
+}
+```
+```go
+func main(){
+	builder_obj := &service{}
+	director_obj:= NewDirector(builder_obj)
+	out_product:= director_obj.Run()
+	fmt.Println(out_product)
+}
+```
+- Factory: In this Design patterns we create objects in a way that allow Flexibility to choose. Exact type of Object only known at Runtime. 
+
+```go
+type Repository interface{
+	Get(id int)(interface{},error)
+	Add(data interface{}) error
+}
+type MySqlImp struct{// MySQL connection details or any necessary configuration}
+
+func(sq *MySqlImp)Get(id int)(interface{},error){
+	// Implement MySQL specific logic to fetch data by ID
+	return
+}
+func(sq *MySqlImp)Add(data interface{}) error{
+	// Implement MySQL specific logic to Add data
+	return
+}
+
+type MongoDBImp struct{// MongoDB connection details or any necessary configuration}
+
+func(mo *MongoDBImp)Get(id int)(interface{},error){
+	// Implement MongoDB specific logic to fetch data by ID
+	return
+}
+func(mo *MongoDBImp)Add(data interface{}) error{
+	// Implement MongoDB specific logic to Add data
+	return
+}
+```
+```go
+type repo struct{}
+func(r *repo) createRepo(type int) (Repository){
+	switch type{
+		case 0:
+			return &MySqlImp{}
+		case 1:
+			return &MongoDBImp{}
+	}
+}
+```
+```go
+func main(){ // Client
+	re:=repo{}
+	riposi:=re.createRepo(1)// at this time only we know Waht type of Get() method is called 
+	dtata:=riposi.Get(56)
+}
+```
+- Observer: In this design pattern chnages of a Feature will broadcast to its Subscriber.
+Subscriber Observe to Data Change of the Producer.
+```go
+type Subscriber interface{ 
+	Update(tick float64)
+}
+
+type Topic interface{
+	Register(s Subscriber)
+	Deregistrer(s Subscriber)
+	Notify(tick float64)
+}
+
+type Publisher struct{ // Publisher Will implenets Topic interface
+	subs []Subscriber
+} 
+func (p *Publisher) Register(s Subscriber){
+	p.subs=append(p.subs, s)
+}
+func (p *Publisher) Deregister(s Subscriber){
+	for i,sub:=range p.subs{
+		if sub==s{
+			p.subs=append(p.subs[:i],p.subs[i+1:]...)
+			break
+		}
+	}
+}
+func (p *Publisher) Notify(tick float64){ 
+	// Notify will get all Active Subscriber and Updates the tick of subscribers
+	for _,sub:=range p.subs{
+		sub.Update(tick)
+	}
+}
+```
+```go
+type Client struct{ // Client Will implements Subscriber interface
+	Name string
+}
+func (c *Client) Update(tick float64){
+	fmt.Println(c.Name+" is listening. ping is :",tick)
+}
+```
+```go
+func main(){
+
+	sub_1:=&Client{Name:"R"}
+	sub_2:=&Client{Name:"u"}
+	sub_3:=&Client{Name:"p"}
+	sub_4:=&Client{Name:"a"}
+	sub_5:=&Client{Name:"m"}
+
+	pub:=&Publisher{}
+
+	pub.Register(sub_1)
+	pub.Register(sub_2)
+	pub.Register(sub_3)
+	pub.Register(sub_4)
+	pub.Register(sub_5)
+
+	go func(){ // Publisher will publish tick every seconds
+		for i:=0;i<2;i++{
+			tick:=float64(i)+0.5
+			pub.Notify(tick)
+			time.Sleep(time.Second)
+		}
+	}()
+	time.Sleep(6*time.Second)
+	pub.Deregister(sub_3)
+	// Simulate publishing another article after deregistration
+	pub.Notify(23.67)
+	time.Sleep(5*time.Second)
+}
+```
+- Decorator: Most important patterns For Game Developemnts. This patterns allows add features Dynamically at Runtime without affecting the Core functionalities. 
+```go
+
+type Features interface {
+	Attack() int
+	Defense() int
+}
+
+type Player struct{ // Player will implements Features interface.
+	attack int
+	defense int
+}
+func (p *Player) Attack()int{
+	return p.attack
+}
+func (p *Player) Defense() int{
+	return p.defense
+}
+```
+```go
+type Weapon struct{ // Weapon enhances a player's attack power by adding more value.
+	player *Player
+	attack int
+} 
+type Helmet strcut{ // Helmet enhances a player's defense power by adding more value.
+	player *Player
+	defense int
+}
+func (p *Weapon) Attack()int{
+	p.player.attack= p.player.attack + p.attack
+	return p.player.attack 
+}
+func (p *Weapon) Defense() int{
+	return p.player.defense
+}
+func (p *Helmet) Attack()int{
+	return p.player.attack 
+}
+func (p *Helmet) Defense() int{
+	p.player.defense=p.player.defense+p.defense
+	return p.player.defense
+}
+```
+```go
+func main(){
+	// Spawn with default Powers
+	p:=&Player{
+		attack:10,
+		defense:10,
+	}
+	fmt.Println("Game Start")
+	fmt.Println("Player Found Level3-Helmet")
+	player_with_helemt:=&Helmet{
+		player: p,
+		defense: 5,
+	}
+	fmt.Println("Player has Attack ",player_with_helemt.Attack()," Defense ",player_with_helemt.Defense())
+	fmt.Println("After Some time player found AK-47")
+	player_with_helemt_weapon:=&Weapon{
+		player: &player_with_helemt.player,
+		attack: 5,
+	}
+	
+	fmt.Println("Player has Attack ",player_with_helemt_weapon.Attack()," Defense ",player_with_helemt_weapon.Defense())
+}	
+```
+```bash
+Game Start
+Player Found Level3-Helmet
+Player has Attack  10  Defense  15
+After Some time player found AK-47
+Player has Attack  15  Defense  15
 ```
