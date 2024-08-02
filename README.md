@@ -871,228 +871,68 @@ Player has Attack  15  Defense  15
 ```
 
 ## Explain Domain Driven Development.
-- In Domain Driven Development we focus on deep understanding of the Core problem we are try to Solve. We focus on understanding the Entities, Value-Objects, Aggregates that reflects the Business Logic. We start development of the Core then Iteratively development based on Feedback and Evolving understanding. We breakdown the systems into manageable parts(Micro-services) based on different business logic.
 
-Imagine we are building Online Shopping Cart, where User can Browse and Add product into Cart, then can place Orders. So,
+- Domain Driven Design is a Methodology for Developing complex Software systems by Focusing the Subject-Area around which the Application is centered(the Subject area is called Domain).
 
-we try to understand deeply the Domain of Online Cart:
+- In DDD we focus on understanding the Core problem/business-logic of our Domain and then Define and Design Models that represents this Domain. 
 
-- Core Concepts: Products, Users, Orders, Cart, Payment, Shipping etc.
+- Imagine We are Developing for Online Shooing Cart.
 
-- Business Rules: Discount, Shipping-Polices, Payment-Gateways, Inventory-Management etc.
+- First we have to Understand how User interact with the Cart and Orders, then how to handle Payments, handle Delivery(Shipping), etc.
 
-- Explain all the Terms to the Team Members. Define each term means and how they interacts.
+- Then we Design the Models that reflects the business rules.
 
-- Identify the Boundaries: Creating Different Micro-services with separate abilities (have to create Product, Order, Auth, User, Payment etc Micro-services). Product and Order should not be mixed.
-
-- Clear separation of Domain Models: Product, Order, User Models.
-
-- Clear knowledge of Value-Object: Value object is a struct which have no identity without its own Fields value. Two Value object will be treated as equal if both have same values of all the fields. CartItem is a Struct which have Product_id and Quantity fields, These attributes determine the nature of the Cart-item. In domain-driven design, equality of value objects is determined based on their attribute values rather than their identity.
-
-- Clear understanding of Aggregates: Aggregates are the Cluster of Related Objects that are treated as a Single unit. An Order often comprises multiple related entities and value objects such as Order-items, Customer-details, and Payment-details. when an order is placed or updated, all related data within the aggregate is managed consistently. Order struct acts as the Root of the Aggregate, managing the life-cycle of associated Objects like Order-items and PaymantDetails.
-
-- Clear understanding of Services: PaymentService (handling payment transactions), Shipping-service (calculating shipping costs).
-
-- Create proper Repositories Contracts using Interfaces. And Separate them based on the Services.
-
-- Create Some important Events like Order-placed event, PayamentSuccess event, Order-delivered event, Inventory-updated event etc. Using these events we can trigger other services like Advertisement, Notify, Subscriptions, Report/Analytics etc.
-
-- Clear understanding of Orchestration: Placed-Order-Service Coordinates with Inventory and Payments services. Cart-Service Coordinates with Pricing of Product and Inventory for adaptation of future price and quantity changes.
-
-### Define Entities and Value Objects
 
 ```go
-
-
-// Product entity
-
-type Product struct {
-	ID uuid.UUID
-	Name string
-	Price float64
-	Quantity int
-}
-
-/*
-CartItem value object
-A CartItem is defined by its attributes such as ProductID and Quantity.
-These attributes determine the nature of the CartItem,
-but the CartItem itself does not have an identity independent of these attributes.
-Two CartItem instances are considered equal if their attributes
-(ProductID and Quantity) are the same. In domain-driven design,
-equality of value objects is determined based on their attribute
-values rather than their identity.
-*/
-
 type CartItem struct {
-	ProductID uuid.UUID
-	Quantity int
+    ProductID uuid.UUID
+    Quantity  int
 }
-
-// Order entity
-
 type Order struct {
-	ID uuid.UUID
-	CustomerID uuid.UUID
-	Items []CartItem
-	Total float64
-	CreatedAt time.Time
+    ID         uuid.UUID
+    CustomerID uuid.UUID
+    Items      []CartItem
+    User       User
+    Payment    Payment
+    Total      float64
+    CreatedAt  time.Time
 }
-
-
 ```
+- We understand the Entities, Value-Objects, Aggregates, Bounded Contexts of Models.
+- Objects that have distinct id and lifecycle are called Entities. Order, User are enitities as they have Unique id.
+- Objects that are immutable piece of data, they do no have unique Id, but have fields which collectively defined the uniqueness. CartItem is a value object because two CartItem instances are considered equal if their ProductID and Quantity match exactly.
+- Groups of related entities and value objects that are treated as a single unit are called Aggregate. An Order aggregate might include CartItems, Payment, and User as part of the aggregate to ensure that changes are made consistently across related objects.
 
- ### Aggregates group related entities and value objects together, with an aggregate root enforcing consistency.
+- Bounded Contexts help manage complexity by dividing a large domain into smaller, more manageable parts. For the online shopping cart, we might have:
+    - Product Context: Manages product information only.
+    - Order Context: Handles order creation and management only.
+    - User Context: Manages user information and authentication only.
+    - Payment Context: Handles payment processing only.
+    - Shipping Context: Manages shipping and delivery only.
 
-```go
-/*
-Order aggregate root
-An Order often comprises multiple related entities
-and value objects such as OrderItems, CustomerDetails, and PaymentDetails
-when an order is placed or updated, all related data
-within the aggregate is managed consistently.
-An order may have rules regarding minimum quantities,
-total prices, or eligibility for discounts.
-By defining these rules within the aggregate,
-you ensure they are consistently enforced whenever an order is manipulated.
-The CustomerDetails and PaymentDetails are correctly associated with the order.
-*/
-type OrderAggregate struct {
-	Order *Order
-}
+- Then we Identify and implement core business rules within the domain:
+    - Discount: Rules for applying discounts.
+    - Shipping Policies: Rules for shipping costs and methods.
+    - Payment Gateways: Integration with payment providers.
+    - Inventory Management: Managing product availability.
 
-func (oa *OrderAggregate) AddItem(productID uuid.UUID, quantity int) error {
-	// Business logic to add items to the order
-}
+- Create and Define terms to understand and communicate between Team Members. These terms also present in the Code-base.
 
+- Next Breakdown the Project into Micro-services and Repositories. We can create Auth, Payment, User micro-services, with there own Repositories contracts.
 
-```
+- Next we can Define some important Events like OrderPlaced: Triggered when an order is placed , PaymentSuccess: Triggered when a payment is successful, OrderDelivered: Triggered when an order is delivered, InventoryUpdated: Triggered when inventory levels are updated.
 
- ### Repositories abstract the data persistence layer for entities.
+- These events can trigger other services such as notifications, analytics, or advertisement systems.
 
-```go
+- Orchestration involves coordinating the interactions between different services. For example:
 
-// ProductRepository interface
-type ProductRepository interface {
-	Save(product *Product) error
-	FindByID(id uuid.UUID) (*Product, error)
-	// Other methods like FindByName, Delete, etc.
+	PlacedOrderService: Coordinates with Inventory and Payments services to ensure that the order can be fulfilled and paid for.
 
-}
+	CartService: Coordinates with Pricing and Inventory services to ensure that the cart reflects accurate pricing and availability.
 
-// OrderRepository interface
-type OrderRepository interface {
-	Save(order *Order) error
-	FindByID(id uuid.UUID) (*Order, error)
-	// Other methods like FindByCustomerID, UpdateStatus, etc.
-}
+Domain-Driven Design emphasizes a deep understanding of the domain.
 
-```
+Using this understanding we create models that reflect the business rules, and organizing these models into bounded contexts for manage complexity.
 
- ### Application services orchestrate interactions between domain models and external systems.
+By focusing on core domain concepts, defining clear boundaries, and using aggregates and repositories effectively, we can build robust, scalable systems that align well with business needs.
 
-```go
-
-// ProductService handles operations related to products
-type ProductService struct {
-	productRepo ProductRepository
-}
-
-func (ps ProductService) AddProduct(name string, price float64, quantity int) (Product, error) {
-	// Business logic to add a new product
-}
-
-// OrderService handles operations related to orders
-type OrderService struct {
-	orderRepo OrderRepository
-}
-
-func (os OrderService) PlaceOrder(customerID uuid.UUID, items []CartItem) (Order, error) {
-	// Business logic to place a new order
-}
-
-
-```
-
-### Implement the infrastructure layer for persistence, messaging, etc. For simplicity, we'll use in-memory repositories.
-
-```go
-// InMemoryProductRepository implements ProductRepository using in-memory storage
-
-type InMemoryProductRepository struct {
-	products map[uuid.UUID]*Product
-}
-
-func (r InMemoryProductRepository) Save(product Product) error {
-	r.products[product.ID] = product
-	return nil
-
-}
-
-func (r InMemoryProductRepository) FindByID(id uuid.UUID) (Product, error) {
-	if product, ok := r.products[id]; ok {
-		return product, nil
-	}
-	return nil, errors.New("product not found")
-
-}
-// InMemoryOrderRepository implements OrderRepository using in-memory storage
-
-type InMemoryOrderRepository struct {
-	orders map[uuid.UUID]*Order
-}
-
-func (r InMemoryOrderRepository) Save(order Order) error {
-	r.orders[order.ID] = order
-	return nil
-
-}
-
-func (r InMemoryOrderRepository) FindByID(id uuid.UUID) (Order, error) {
-	if order, ok := r.orders[id]; ok {
-		return order, nil
-	}
-	return nil, errors.New("order not found")
-
-}
-
-```
-
-### Now, let's see how we would use these components in a hypothetical scenario:
-
-```go
-func main() {
-
-	// Initialize repositories
-	productRepo := &InMemoryProductRepository{
-		products: make(map[uuid.UUID]*Product),
-	}
-	orderRepo := &InMemoryOrderRepository{
-		orders: make(map[uuid.UUID]*Order),
-	}
-	// Initialize services
-	productService := &ProductService{productRepo}
-	orderService := &OrderService{orderRepo}
-	// Example usage: Add a new product
-	newProduct, err := productService.AddProduct("Smartphone", 999.99, 50)
-	if err != nil {
-		fmt.Println("Error adding product:", err)
-		return
-	}
-	fmt.Println("New Product ID:", newProduct.ID)
-	// Example usage: Place a new order
-	customerID := uuid.New()
-	items := []CartItem{
-		{ProductID: newProduct.ID, Quantity: 2},
-	}
-	newOrder, err := orderService.PlaceOrder(customerID, items)
-	if err != nil {
-		fmt.Println("Error placing order:", err)
-		return
-	}
-	fmt.Println("New Order ID:", newOrder.ID)
-}
-
-```
-
-## Explain Event Driven Development.
