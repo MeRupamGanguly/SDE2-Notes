@@ -936,3 +936,192 @@ Using this understanding we create models that reflect the business rules, and o
 
 By focusing on core domain concepts, defining clear boundaries, and using aggregates and repositories effectively, we can build robust, scalable systems that align well with business needs.
 
+## Explain Event Driven Development.
+- Event Driven design pattern where system components(Functions/Micro-services) communicate through the production and consumption of Events. Event Driven Design are useful when we need to handle Asynchronous or Real-time Data processing with Scalable solutions. 
+
+- Components in an event-driven system are loosely coupled. Producers of events are not aware of or dependent on the consumers of those events. This makes it easier to change or replace components without affecting the entire system.
+
+- Imagine we building Shoping-Cart application, then Order-Added, Order-Delivered, Paymanet-Success, Inventory-Updated these can be Events. In Go-Lang we Define event normally with Struct. That Event Struct must contain Event-Type, Payload, and Creatred-At fields by which we can Differenciate between multiples Events.
+
+- Functions, Services are Event Producer. Event Producer send data to Channels or Message-Queue like Rabit-MQ.
+
+- After an Event occur Some other Fucntions or Services read frome the Channel or Message Queue then Responds according to the Event-Type and Payload.
+
+- For more sophisticated way to Handle events where Multiple Producer and Consumer can Interact we create an Event-Bus by using Go-Channel and Go-Routines.
+
+- We also can create PUB-SUB model where multiple Subscribers can listen to events.
+
+```go
+package main
+
+import (
+	"fmt"
+	"sync"
+	"time"
+)
+
+type Event struct {
+	EventType string
+	Payload   string
+	CreatedAt time.Time
+}
+type service struct {
+	subs map[string][]chan Event //Stores Subscribers by Type
+	mu   sync.RWMutex
+}
+```
+![Screenshot from 2024-08-03 19-40-25](https://github.com/user-attachments/assets/ba0685bd-09f5-44b7-9c48-a4e322b0ef06)
+```go
+func NewBusService() *service {
+	return &service{
+		subs: make(map[string][]chan Event),
+	}
+}
+func (svc *service) Pub(e Event) {
+	svc.mu.RLock()
+	defer svc.mu.RUnlock()
+	for _, ch := range svc.subs[e.EventType] {
+		ch <- e
+	}
+}
+func (svc *service) Sub(e_type string, ch chan Event) {
+	svc.mu.Lock()
+	defer svc.mu.Unlock()
+	svc.subs[e_type] = append(svc.subs[e_type], ch)
+}
+func main() {
+	bus := NewBusService()
+
+	ch1 := make(chan Event)
+	ch2 := make(chan Event)
+	ch3 := make(chan Event)
+
+	bus.Sub("ev1", ch1)
+	bus.Sub("ev2", ch2)
+	bus.Sub("ev1", ch3)
+
+	go func() {
+		for c := range ch1 {
+			fmt.Println("ch1", c.EventType, c.Payload, c.CreatedAt)
+		}
+	}()
+	go func() {
+		for c := range ch2 {
+			fmt.Println("ch2", c.EventType, c.Payload, c.CreatedAt)
+		}
+	}()
+	go func() {
+		for c := range ch3 {
+			fmt.Println("ch3", c.EventType, c.Payload, c.CreatedAt)
+		}
+	}()
+	bus.Pub(Event{EventType: "ev1", Payload: "This is Event 1", CreatedAt: time.Now()})
+	time.Sleep(time.Second)
+	bus.Pub(Event{EventType: "ev1", Payload: "This is Event 1", CreatedAt: time.Now()})
+	time.Sleep(time.Second)
+	bus.Pub(Event{EventType: "ev2", Payload: "This is Event 2", CreatedAt: time.Now()})
+	time.Sleep(time.Second * 3)
+	defer func() {
+		close(ch1)
+		close(ch2)
+		close(ch3)
+	}()
+}
+
+```
+```bash
+ch1 ev1 This is Event 1 2024-08-03 19:48:01.320195368 +0530 IST m=+0.000054084
+ch3 ev1 This is Event 1 2024-08-03 19:48:01.320195368 +0530 IST m=+0.000054084
+ch3 ev1 This is Event 1 2024-08-03 19:48:02.320858704 +0530 IST m=+1.000717496
+ch1 ev1 This is Event 1 2024-08-03 19:48:02.320858704 +0530 IST m=+1.000717496
+ch2 ev2 This is Event 2 2024-08-03 19:48:03.321257389 +0530 IST m=+2.001116171
+```
+
+- RabbitMQ is a powerful message broker that can be effectively used with Go to implement an event-driven architecture.
+- First we create connection/Dial, get a object which have Channel(), QueueDeclare(), Publish(), Consume() functions associated with it. 
+- Channel A virtual connection within a RabbitMQ connection. Channels are used for communication between producers and consumers.
+- Queue A storage buffer that holds messages.
+- Publish Sends messages to RabbitMQ which are put into the specified queue.
+- Consume Listens for messages from the queue and processes them as they arrive.
+
+
+```go
+conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+
+defer conn.Close()
+
+ch, err := conn.Channel()
+defer ch.Close()
+```
+
+```go
+	queue, err := ch.QueueDeclare(
+		"event_queue", // Queue name
+		false,         // Durable
+		false,         // Delete when unused
+		false,         // Exclusive
+		false,         // No-wait
+		nil,           // Arguments
+	)
+```
+
+```go
+	payload:="I am the data"
+	err = ch.Publish(
+		"",             // Exchange
+		queue.Name,     // Routing key (queue name)
+		false,          // Mandatory
+		false,          // Immediate
+		amqp.Publishing{
+			ContentType: "text/plain",
+			Body:        []byte(payload),
+		},
+	)
+```
+
+```go
+	msgs, err := ch.Consume(
+		queue.Name, // Queue name
+		"",         // Consumer tag
+		true,       // Auto-ack
+		false,      // Exclusive
+		false,      // No-local
+		false,      // No-wait
+		nil,        // Arguments
+	)
+	for msg := range msgs {
+		log.Printf("Received a message: %s", msg.Body)
+	}
+```
+- An event streaming platform like Apache-Kafka/Amazon Kinesis is designed to handle, process, and analyze continuous streams of events or data in real-time. Such platforms are crucial for modern applications requiring real-time data processing, analytics, and integration.  
+- Create a new writer with the broker address and topic
+```go
+	w := kafka.NewWriter(kafka.WriterConfig{
+		Brokers: []string{"localhost:9092"}, // Brokers: List of Kafka broker addresses.
+		Topic:   "events", //  The Kafka topic to which messages are sent.
+	})
+
+	defer w.Close()
+	
+	message := kafka.Message{
+		Key:   []byte("Key1"),
+		Value: []byte("Hello Kafka!"),
+	}
+
+	err := w.WriteMessages(context.Background(), message)
+```
+- Create a new reader with the broker address, group ID, and topic
+```go
+	r := kafka.NewReader(kafka.ReaderConfig{
+		Brokers: []string{"localhost:9092"},
+		Topic:   "events", // The Kafka topic from which messages are read.
+		GroupID: "group1", // Consumer group ID for managing offsets and scaling.
+	})
+
+	defer r.Close()
+
+	for {
+		msg, err := r.ReadMessage(context.Background())
+		log.Printf("Received message: %s", string(msg.Value))
+	}
+```
