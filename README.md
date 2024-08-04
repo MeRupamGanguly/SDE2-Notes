@@ -1184,10 +1184,23 @@ defer ch.Close()
 ```
 
 ## What is System Design, and how is it Importnat?
-- System Design involves Designing the Architecture, COmponents and Modules of a System, to Satisfy Application specific Requirements. System design is important for Scalable, Maintainable application. 
+- System Design involves Designing the Architecture, Components and Modules of a System, to Satisfy Application specific Requirements. System design is important for Scalable, Maintainable application. 
 
-## Explain the concept of sharding in database design.
-
+## Explain the concept of sharding in database design. Describe how MongoDB achieves horizontal scalability and high availability in its architecture.
+- MongoDB uses sharding to horizontally partition data across multiple machines or nodes called shards.
+- Each shard contains a subset of the data, distributed based on a shard key. This allows MongoDB to distribute read and write operations across shards.
+- Sharding enables MongoDB to handle large volumes of data and high throughput by scaling out horizontally.
+- The shard key determines how data is distributed across shards. It’s a crucial design decision that impacts data distribution and query performance.
+- When a client application sends a query to MongoDB, the query is routed through the mongos instance. The mongos examines the query to determine which shard(s) contain the relevant data based on the shard key. 
+- Mongos instances also manage load balancing across the shards. They distribute incoming queries evenly across shards to ensure that no individual shard becomes overwhelmed with requests, thereby optimizing performance. Adding more mongos instances can improve the throughput and scalability of a MongoDB deployment, as they handle query routing and load balancing.
+- MongoDB uses config servers to store metadata about the sharded cluster, including the mapping between shards and ranges of shard keys.
+- Config servers provide configuration and coordination services, allowing MongoDB routers (mongos instances) to direct queries to the appropriate shards based on the shard key.
+- MongoDB uses replica sets to provide redundancy and automatic failover.
+- Each replica set consists of multiple nodes (typically three or more): one primary node for read and write operations and secondary nodes that replicate data from the primary. If the primary node fails, a new primary is elected from the remaining nodes in the replica set, ensuring continuous availability.
+- MongoDB’s oplog is a capped collection that records all write operations (inserts, updates, deletes) in the order they occur.
+- MongoDB replica sets support automatic failover. If the primary node becomes unavailable, a secondary node is automatically promoted to primary.
+- Clients can continue to read and write data from the new primary node without interruption, ensuring high availability and reliability.
+    
 ## How do you approach designing a System from Scratch.
 - Understanding the Requirements properly.
 - Gather and Write down the Main Domain of the System, and What are the Scalability we want to achive with inline Pricing.
@@ -1222,18 +1235,170 @@ defer ch.Close()
 
 ## How would you design and secure a microservices architecture?
 
+## TODO
+- JWT (JSON Web Token) is a compact way to transfer claims securely between parties. It's often signed and optionally encrypted to ensure data integrity and confidentiality. JWTs are used as access tokens in OAuth and for secure authentication, being efficient for transmitting data securely as JSON objects.
+
+- RBAC (Role-Based Access Control) restricts network access based on user roles within an organization. Permissions are assigned to roles, simplifying management and ensuring consistent access control.
+
+- OAuth is a standard that lets users give websites or apps permission to access their info on other sites without giving away their passwords. It uses tokens to grant limited access, issued by a server, allowing apps to act on behalf of users securely.
+
+- JWT (JSON Web Token) is a compact way to transfer claims securely between parties. It's often signed and optionally encrypted to ensure data integrity and confidentiality. JWTs are used as access tokens in OAuth and for secure authentication, being efficient for transmitting data securely as JSON objects.
+
+- RBAC (Role-Based Access Control) restricts network access based on user roles within an organization. Permissions are assigned to roles, simplifying management and ensuring consistent access control.
+
+- ABAC (Attribute-Based Access Control) evaluates attributes like user roles, resource details, and environmental conditions to decide access. It offers precise control by defining policies based on a wide range of attributes, adapting to changing circumstances.
+
+- TLS (Transport Layer Security) is a protocol that secures communication over networks by ensuring privacy, integrity, and data protection. It's commonly used to secure HTTP connections (HTTPS), using cryptography for key exchange, data encryption, and integrity verification.
 
 
 ## Describe the differences between SQL and NoSQL databases. When would you choose one over the other?
-
+- SQL databases are relational and suitable for structured data and complex queries. NoSQL databases are non-relational, suitable for unstructured or semi-structured data, and provide high availability and scalability.
 
 ## How would you handle data consistency in a distributed system?
+- Two-Phase Commit (2PC): Protocol ensuring transaction atomicity and consistency across distributed participants.
+	Phase 1 (Prepare): Coordinator asks participants to prepare.
+	Phase 2 (Commit or Abort): Coordinator commits if all are prepared; otherwise, aborts.
+- Quorum-Based Systems: Ensure success of read/write operations by requiring a minimum replica acknowledgment.
+	Read Quorum: Ensures reading the latest value.
+	Write Quorum: Ensures successful write acknowledgment.
+- CRDTs (Conflict-free Replicated Data Types): Distributed data structures for conflict-free updates.
+	Mergeable: Operations merge without conflicts.
+	Conflict-free: No need for explicit coordination.
+- Comparison:
+	2PC ensures atomicity but may have coordination and availability issues.
+	Quorum systems balance consistency and availability.
+	CRDTs allow independent updates across distributed nodes without synchronization delays.
+
 
 
 ## How would you handle database migrations in a production environment?
+Handling database migrations in production requires careful planning to ensure minimal downtime, data integrity, and smooth transitions between versions.
 
+Blue-Green Deployment:
+
+Maintain two identical environments (blue and green), with only one serving live traffic at any time.
+Deploy database schema changes (and corresponding application updates) to the inactive environment (e.g., green).
+Perform necessary data migrations or updates in the inactive environment.
+Once migration is complete and validated, switch traffic to the updated environment (e.g., green). If issues arise, quickly switch back to the previous environment (e.g., blue).
+
+Canary Releases:
+
+Gradually roll out updates to a small subset of users or traffic.
+Deploy database schema changes to a limited number of servers or databases initially.
+Monitor performance and stability of the updated subset closely.
+If successful, expand the update gradually to more servers or databases.
+Continuously monitor and rollback if issues are detected during the rollout.
+
+Backward-Compatible Schema Changes:
+
+Introduce new database elements (columns, tables, constraints) that do not disrupt existing functionality.
+Ensure old and new versions of the application can coexist temporarily without errors or data loss.
+Update the application gradually to utilize new schema elements.
+Migrate existing data to fit the new schema incrementally or during off-peak hours to minimize disruption.
+
+Flyway:
+
+Open-source database migration tool focused on simplicity and ease of use.
+Supports SQL-based migrations and integrates well with CI/CD pipelines.
+Manages database schema changes using versioned SQL scripts.
+Handles migrations automatically based on version control, supporting major databases like MySQL, PostgreSQL, Oracle, SQL Server, etc.
+
+These strategies and tools are crucial for managing database schema changes in production environments effectively, ensuring continuous deployment with minimal disruptions and maintaining data integrity throughout the migration process.
 
 ## How do you ensure monitoring and observability in a distributed system?
+Logging, metrics collection, distributed tracing, and monitoring tools are essential for maintaining and optimizing system performance and reliability.
 
+Metrics Collection:
+
+Metrics provide quantitative measurements of system performance, resource utilization, and other indicators.
+They support monitoring, capacity planning, and trend analysis.
+Tools like Prometheus are used to scrape metrics from monitored targets, store them locally, and offer a powerful query language (PromQL) for analysis.
+
+Distributed Tracing:
+
+Distributed tracing, exemplified by tools like Jaeger, tracks and monitors transactions across distributed systems.
+It helps in identifying latency issues, debugging performance bottlenecks, and understanding system dependencies.
+
+Monitoring Tools (e.g., Grafana or ELK Stack):
+
+Grafana is an open-source platform for monitoring and observability.
+It supports visualization of metrics, logs, and traces from various data sources including Prometheus and Elasticsearch.
+The ELK stack (Elasticsearch, Logstash, Kibana) is another widely used combination:
+    Elasticsearch: Stores and indexes logs for fast retrieval.
+    Logstash: Collects, processes, and enriches log data before sending it to Elasticsearch.
+    Kibana: Provides visualization and querying capabilities for log data stored in Elasticsearch.
+
+In summary, logging captures detailed records of system activities, metrics provide quantitative measurements for performance analysis, distributed tracing helps in understanding transaction flows across distributed systems, and monitoring tools like Grafana and ELK stack facilitate visualization and analysis of these data points to ensure optimal system operation and reliability.
 
 ## How would you design a system to handle streaming video content?
+Designing a system to handle streaming video content involves several key components and considerations to ensure scalability, reliability, and performance. Here’s a detailed breakdown of how such a system could be structured:
+
+1. Client-side Application:
+
+    User Interface (UI): Includes playback controls, user preferences, and access to content.
+    Media Player: Responsible for decoding and rendering video/audio streams.
+    Streaming Protocol Support: Typically HTTP-based protocols like HLS (HTTP Live Streaming), MPEG-DASH (Dynamic Adaptive Streaming over HTTP), or proprietary protocols.
+
+2. Content Ingestion:
+
+    Encoder/Transcoder: Converts raw video/audio into suitable formats and bitrates for streaming.
+    Packager: Segments encoded media into small chunks (e.g., 2-10 seconds) and creates manifest files (e.g., .m3u8 for HLS, .mpd for MPEG-DASH).
+
+3. Content Storage:
+
+    Origin Servers: Store and serve the original, encoded, and segmented media files.
+    Content Delivery Network (CDN): Distributes content closer to end-users for faster delivery and reduced server load.
+
+4. Content Delivery:
+
+    Edge Servers (CDN Edge): Cache and deliver media segments to users based on geographical proximity.
+    Load Balancers: Distribute incoming requests across multiple servers to optimize performance and reliability.
+    Quality of Service (QoS): Ensures reliable delivery with adaptive bitrate streaming based on network conditions.
+
+5. Streaming Protocols and Formats:
+
+    HTTP Live Streaming (HLS): Apple’s adaptive streaming protocol widely supported on iOS and browsers.
+    MPEG-DASH: Industry-standard for adaptive streaming, supported by a wide range of devices.
+    RTMP (Real-Time Messaging Protocol): Older protocol, often used for live streaming.
+
+6. Security:
+
+    Digital Rights Management (DRM): Protects content from unauthorized access and piracy.
+    Encryption: Secures content during transmission (e.g., HTTPS, DRM-specific encryption).
+
+7. Analytics and Monitoring:
+
+    Playback Analytics: Track user engagement, viewing habits, and quality of experience (QoE).
+    Server Monitoring: Monitor server health, bandwidth usage, and CDN performance.
+
+8. Global Scalability:
+
+    Multi-Region Deployment: Distribute servers across different regions to reduce latency and increase reliability.
+    Auto-scaling: Automatically adjust server capacity based on traffic demands.
+
+9. Resilience and Fault Tolerance:
+
+    Redundancy: Duplicate critical components to ensure uninterrupted service in case of failures.
+    Backup and Recovery: Regular backups of content and configuration settings.
+
+10. Content Management:
+
+    Metadata Management: Store and manage metadata related to videos (e.g., title, description, tags).
+    Content Versioning: Manage different versions of videos, updates, and archival.
+
+Example Workflow:
+
+Content Ingestion: Raw video is encoded into multiple bitrates and segmented.
+Content Storage: Segmented videos and manifests are stored on origin servers and replicated to CDN edge servers.
+Content Delivery: User requests are routed to the nearest edge server, which delivers the appropriate video segments based on available bandwidth and device capabilities.
+Security: Encrypted communication (HTTPS) and DRM protect content during transmission and playback.
+Analytics: Monitor user interactions and server performance for insights and optimizations.
+
+Considerations:
+
+Bandwidth Optimization: Adapt streaming quality based on network conditions.
+Device Compatibility: Support for various devices and platforms (e.g., mobile, desktop, smart TVs).
+Latency: Minimize delay between live events and user playback.
+Regulatory Compliance: Adhere to local regulations regarding content delivery and storage.
+
+Discuss content delivery networks (CDNs), video encoding/transcoding, adaptive bitrate streaming (ABR), and scalable storage solutions.
