@@ -48,6 +48,59 @@ func main(){
 }
 ```
 
+## Desicribe importance of Interface in GOlang.
+- Interface allow us to Define a contract, interface can contain method signature-> Method name,arguments and return types.
+
+- A type implements an interface, by Providing the Implementations, for all the Method declared in the Interface.
+
+- An empty Interface can hold values of any type because it has no methods. 
+```go
+func print( i interface{}){
+	switch v:=i.(type){
+		case int:
+			fmt.Println("Integer")
+		case float:
+			fmt.Println("Float")
+		case Employee: // User defined type
+			fmt.Println("Employee")
+		
+	}
+}
+
+```
+- We can compose Interfaces:
+```go
+// The Printer interface defines a contract for printers with a Print method.
+type Printer interface {
+	Print()
+}
+// The Scanner interface defines a contract for scanners with a Scan method.
+type Scanner interface {
+	Scan()
+}
+// The NewTypeOfDevice interface combines Printer and Scanner interfaces for New type of devices which can Print and Scan with it new invented Hardware.
+type NewTypeOfDevice interface {
+	Printer
+	Scanner
+}
+```
+- Reflect package in GO allows to get runtime Type of interface
+```go
+func printTypeInfo(i interface{}) {
+    t := reflect.TypeOf(i)
+    fmt.Println("Type:", t)
+}
+```
+
+
+```go
+var a Animal = Dog{}
+if dog, ok := a.(Dog); ok {
+    fmt.Println("Dog:", dog)
+}
+```
+- Animal is an interface type. Dog is a concrete type that implements the Animal interface. a is a variable of type Animal that holds a Dog value..   a.(Dog) is a type assertion. It checks if the variable a (of type Animal) holds a value of type Dog.
+
 ## Describe Functional Programming With GOLANG.
 Personally In GOlang I did not use Functional Programming much, It takes lot of Memory as basically, we make copies of the data, we want to work on, and also Hard to Read for Freshers. But the two importants features I used sometimes are:
 
@@ -1094,6 +1147,10 @@ defer ch.Close()
 	}
 ```
 - An event streaming platform like Apache-Kafka/Amazon Kinesis is designed to handle, process, and analyze continuous streams of events or data in real-time. Such platforms are crucial for modern applications requiring real-time data processing, analytics, and integration.  
+- In Kafka we create NewWrite with configuarations of Broker address and Topic. Then we create Message Struct with Key Value Bytes. Then we call WriteMessage function to send the messages.
+- In Kafka we create NewReader with configuaration of Brokers addess, Topic and GroupId. Then inside a loop we call the ReadMessage function for getting the Messages.
+
+
 - Create a new writer with the broker address and topic
 ```go
 	w := kafka.NewWriter(kafka.WriterConfig{
@@ -1125,3 +1182,58 @@ defer ch.Close()
 		log.Printf("Received message: %s", string(msg.Value))
 	}
 ```
+
+## What is System Design, and how is it Importnat?
+- System Design involves Designing the Architecture, COmponents and Modules of a System, to Satisfy Application specific Requirements. System design is important for Scalable, Maintainable application. 
+
+## Explain the concept of sharding in database design.
+
+## How do you approach designing a System from Scratch.
+- Understanding the Requirements properly.
+- Gather and Write down the Main Domain of the System, and What are the Scalability we want to achive with inline Pricing.
+- Documents User Interactions Points like UI/UX.
+- Decides how to Developed the Application like using Domain Driven or Event Drive etc.
+- Breakdown the whole Domain into Small functional, manageble Parts/Modules.
+- Design Interfaces according to the communication between the Small Parts(Micro-services) .
+- Applying Design patterns like Observer-Pattern, Singleton-Pattern, Decorator-Pattern, Factory-Pattern on different components.
+- Decides Best Databases for Different Components.
+- Developed using SOLID principles for Saclability Readabilty and Maintainability.
+- Create mechanism to Catch and Handle Errors and Edge cases properly.
+- Plan how to move the system gracefully from Development to Staging , and from Staging to Deployment.
+- Setup proper Monitoring, Logging and Maintenance with tools and CiCd pipeline.
+
+## Describe the difference between scalability and elasticity.
+- Scalability refers to the ability to handle growth, whereas elasticity is the ability to dynamically allocate and deallocate resources based on demand.
+
+## How would you design a system to handle a million requests per day?
+- Load balancing involves distributing incoming network traffic across multiple servers. Load balancers can operate at different layers (e.g., application layer, network layer) and use various algorithms (round-robin, least connections, IP hash) to distribute requests. Load balancing enables horizontal scaling by adding more servers, and improves performance by optimizing resource utilization.
+
+- Caching involves storing frequently accessed data temporarily in a cache (memory or disk) to reduce access-latency and improve performance. Use caching mechanisms like in-memory caches (Redis, Memcached) or content delivery networks (CDNs) to cache static-assets and frequently-accessed data. Caching Reduces database load, speeds up access times, and improves overall system responsiveness.
+
+- Horizontal scaling (scaling out) involves adding more machines or instances to distribute load across multiple resources.
+
+- Database optimization involves improving the performance and efficiency of database operations to handle large volumes of data and concurrent requests. Use indexes and proper query optimization techniques. Normalize or denormalize database schema based on access patterns. Implement caching mechanisms for frequently accessed data. Use partitioning to distribute data across multiple servers.
+
+- CDNs are networks of servers spread globally to deliver web content quickly. They store copies of content like images and videos on servers closer to users, reducing the distance and speeding up access. When a user requests content, the CDN routes the request to the nearest server. If the content isn't already there, the server fetches it from the main server. CDNs cache static content for a period or based on rules set by the website. This caching reduces load on the main server and improves response times, especially for users far away. CDNs handle high traffic by distributing it across servers and offer security features like DDoS protection and encryption.
+
+## Explain the role of a reverse proxy in system architecture.
+- A reverse proxy sits between clients and servers, forwarding client requests to the appropriate backend server. It can handle tasks like load balancing, SSL termination, and caching.
+
+
+## How would you design and secure a microservices architecture?
+
+
+
+## Describe the differences between SQL and NoSQL databases. When would you choose one over the other?
+
+
+## How would you handle data consistency in a distributed system?
+
+
+## How would you handle database migrations in a production environment?
+
+
+## How do you ensure monitoring and observability in a distributed system?
+
+
+## How would you design a system to handle streaming video content?
