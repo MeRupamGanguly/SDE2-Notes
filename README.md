@@ -1,7 +1,16 @@
 # SDE2-Notes
 
 ## Introduce Yourself.
-- I have a background in BTech IT, passout of 2020. After College I joined Sensibol as a GOlang Backed Developer. My Primary role was Developing Microservices for Our Clients such as PDL and SingShala. We use Golang MongoDB AWS for Building Robust and Scalable Bussiness Logics. I Resigned in April as my Father Treatments of CANCER, Now He is Well and Now I Seeking new Opportunities.
+- I have a background in BTech IT, passout of 2020. After College I joined Sensibol as a GOlang Backed Developer. My Primary role was Developing Microservices for Our Clients such as PDL and SingShala. We use Golang MongoDB AWS for Building Robust and Scalable Bussiness Logics. I Resigned in April for my Father Treatments of CANCER, Now He is Well and Now I Seeking new Opportunities.
+
+## What Project do you curently worked on, and explain about the Project and your involvement on to the Project?
+- I worked on PDL -Phonographic Digital Limited, which is Music distribution and Royalty Management Application. They Upload on Spotify, Resso, Facebook, Youtube, Amazon, Jio, ITunes etc.
+- PDL use GOlang as the Backend Programming language, and Angular as the Frontend Programming language.
+- PDL developed on Domain Driven Design and this Year we moved to Event Driven Design.
+- PDL is based on Microservices architecture with More than 6 services running.
+- My Role was Developing Microservices like Album, Song, Label, Platforms, User, Artists, Converter etc. And Various bussiness logics like implementing DDEX-XML standard, Analytics/Reports, Mongodb Advance Filtering, and Create various Temp-Utilities. Maintain the Huge Code bases and Bug fixes. The size of the Code-base was 450-MB on git.
+- I create various Utilities such as S3 Uploader, Downloader, Lambda apis for different requirements and also tools for Media file conversion by FFMPEG, etc.
+- I also worked on SingShala, and the Role was similar, developing Microservices with Golang and MongoDB, Singshala is More Organised and Simple Project that allow user  to  Upload and Stream  Videos like Tiktok, with extra features of Analysis the Audio-components, the ALgorithm is In-house patent of Sensibol, we only interact with the SDK to get the info of  Singing Rankings of user based on the Uploaded videos.
 
 ## What are Advantages and Disadvantages of Monolith and Microservices?
 - Microservices are Better for BIG project Structure where Scalling and Almost ZERO Downtime required. Fixing Bug and Maintain Large Code base is easy with Microservices. Only Disadvantages of Microservice is Inter Service Network Call which can produce sometime Slow Response time.
