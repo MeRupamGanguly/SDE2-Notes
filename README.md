@@ -349,6 +349,126 @@ func main() {
 	wg.Wait()
 }
 ```
+## Wrie a program which devide the array into parts and calculate sum of elements of each part and then add sum of each parts to get total sum.
+
+We create a Function slowTask which takes array and return the sum of elements of the array.
+At Main function we can devide the main array into parts and call the function slowTask for each parts and store the result for calcualte total sum.
+
+```go
+
+
+func slowTask(arr []int) int {
+	fmt.Println("Slow Task Called")
+	// simulates a time-consuming computation by adding a delay.
+	time.Sleep(time.Second)
+	sum := 0
+	for i := range arr {
+		sum += arr[i] // computes the sum of its elements
+	}
+	return sum
+}
+
+
+
+func main() {
+	startTime := time.Now()
+	arr := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}
+	
+	// It divides the task into smaller segments and processes each segment independently.
+
+	spawnCapacity := 4 // How many Partition of the array required.
+	length := len(arr)
+	patition := length / spawnCapacity // Determines the size of each partition to be processed
+	totalSum := 0
+	for i := 0; i < 4; i++ { // The array is divided into partitions, with each partition being processed by the slowTask function.
+		start := i * patition //  Determines the starting index of the current partition.
+		end := start + patition // Determines the ending index of the current partition.
+		if end > length {
+			end = length // Adjusts the ending index to ensure it does not exceed the length of the array.
+		}
+		totalSum += slowTask(arr[start:end])
+	}
+	fmt.Println("Sum is: ", totalSum)
+	fmt.Println("Time Taken: ", time.Since(startTime))
+}
+
+
+
+```
+```bash
+Slow Task Called
+Slow Task Called
+Slow Task Called
+Slow Task Called
+Sum is:  210
+Time Taken:  4.002764194s
+```
+By executing tasks concurrently, the program typically reduces the overall processing time compared to a sequential approach where tasks are executed one after another.
+Concurrent execution can make better use of system resources, potentially leading to improved performance for time-consuming tasks.
+The program divides a time-consuming summing task into smaller, concurrent tasks to improve efficiency and reduce total execution time.
+The array is partitioned into smaller segments based on a specified number of concurrent tasks (spawnCapacity).
+```go
+func slowTask(arr []int, task func([]int) int, ch chan<- int, wg *sync.WaitGroup) {
+	time.Sleep(time.Second)
+	fmt.Println("Slow Task Called")
+	defer wg.Done()
+	res := task(arr)
+	ch <- res // sends result to a channel.
+}
+
+func main() {
+	startTime := time.Now()
+	arr := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}
+	spawnCapacity := 4 //Number of concurrent tasks (goroutines) to spawn.
+	length := len(arr)
+	patition := length / spawnCapacity  // Determines the size of each partition to be processed by each goroutine.
+	ch := make(chan int, spawnCapacity) //  Creates a buffered channel with capacity spawnCapacity to collect results from goroutines.
+	var wg sync.WaitGroup
+	for i := 0; i < spawnCapacity; i++ {
+		start := i * patition   // Determines the starting index of the current partition.
+		end := start + patition // Determines the ending index of the current partition.
+		if end > length {
+			end = length // Adjusts the ending index to ensure it does not exceed the length of the array.
+		}
+		wg.Add(1)
+
+		t := func(a []int) int { // Writing logic of the Task
+			fmt.Println("logic called for slice: ", a)
+			// Computes the sum of the slice and return.
+			t := 0
+			for i := range a {
+				t += a[i]
+			}
+			return t
+		}
+
+		go slowTask(arr[start:end], t, ch, &wg)
+	}
+	go func() { // Starts a goroutine that waits for all tasks to complete and then closes the channel to signal that no more results will be sent.
+		wg.Wait()
+		close(ch)
+	}()
+	//Aggregates the results from the channel and computes the total sum.
+	sum := 0
+	for partialTaskResult := range ch {
+		sum += partialTaskResult
+	}
+	fmt.Println("Sum is: ", sum)
+	fmt.Println("Time Taken: ", time.Since(startTime))
+}
+```
+```bash
+Slow Task Called
+Slow Task Called
+logic called for slice:  [16 17 18 19 20]
+logic called for slice:  [6 7 8 9 10]
+Slow Task Called
+logic called for slice:  [1 2 3 4 5]
+Slow Task Called
+logic called for slice:  [11 12 13 14 15]
+Sum is:  210
+Time Taken:  1.000637245s
+```
 
 ## Describe uses of Select in Golang.
 Assume a development scenerio where we have 3 s3 Buckets. We spawn 3 GO-Routines each one uploading a File on each S3 bucket at same time. We have to Return SignedUrl of the file so user can stream the File as soon as possible. Now we do not have to wait for 3 S3 Upload operation, when one s3 upload done we can send the SignedUrl of the File to the User so he can Stream. And Other two S3 Upload will continue at same time. This is the Scenerio when Select Statement will work as a Charm.
