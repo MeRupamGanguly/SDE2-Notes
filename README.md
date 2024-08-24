@@ -1531,3 +1531,264 @@ Latency: Minimize delay between live events and user playback.
 Regulatory Compliance: Adhere to local regulations regarding content delivery and storage.
 
 Discuss content delivery networks (CDNs), video encoding/transcoding, adaptive bitrate streaming (ABR), and scalable storage solutions.
+
+
+```go
+package main
+
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
+
+/*
+This function takes a string s as input and returns a new string that is the reverse of s.
+It converts the string to a slice of runes to handle Unicode characters correctly,
+then uses two pointers to swap characters from the beginning and end until the entire string is reversed.
+*/
+func reverseString(s string) string {
+	arr := []rune(s)
+	l := 0
+	r := len(arr) - 1
+	for i := 0; i < len(arr); i++ {
+		if l >= r {
+			return string(arr)
+		}
+		hold := arr[l]
+		arr[l] = arr[r]
+		arr[r] = hold
+		l++
+		r--
+	}
+	return string(arr)
+}
+
+/*
+This function calculates the factorial of a non-negative integer n.
+The factorial of n (denoted as n!) is the product of all positive integers less than or equal to n.
+This implementation uses recursion to compute the factorial. For n equal to 0,
+it returns 1, as 0! is defined to be 1.
+*/
+func factorial(n int) int {
+	if n == 0 {
+		return 1
+	}
+	return n * factorial(n-1)
+}
+
+/*
+This function determines if a given integer n is a prime number.
+A prime number is a positive integer greater than 1 that has no
+
+	positive integer divisors other than 1 and itself.
+	The function returns true if n is prime and false otherwise.
+	If n is less than or equal to 1, it returns false.
+*/
+func isPrime(n int) bool {
+	if n <= 1 {
+		return false
+	}
+	for i := 2; i < n; i++ {
+		if n%i == 0 {
+			return false
+		}
+	}
+	return true
+}
+
+/*
+This function computes the nth Fibonacci number using recursion.
+The Fibonacci sequence is a series of numbers where each number is
+the sum of the two preceding ones, usually starting with 0 and 1.
+This function returns the nth number in the Fibonacci sequence,
+where fibonacci(0) returns 0 and fibonacci(1) returns 1.
+*/
+func fibonacci(n int) int {
+	if n <= 1 {
+		return n
+	}
+	return fibonacci(n-1) + fibonacci(n-2)
+}
+
+/*
+This function checks if a given string s is a palindrome.
+A palindrome is a string that reads the same forward and backward.
+The function converts the string to a slice of runes to handle Unicode characters,
+then uses two pointers to compare characters from the beginning and end.
+It returns true if the string is a palindrome and false otherwise.
+*/
+func palindrome(s string) bool {
+	arr := []rune(s)
+	l := 0
+	r := len(arr) - 1
+	for i := 0; i < len(arr); i++ {
+		if l > r {
+			return true
+		}
+		if arr[l] != arr[r] {
+			return false
+		}
+		l++
+		r--
+	}
+	return true
+}
+
+/*
+This function merges two sorted integer slices, a1 and a2, into a single sorted slice.
+It iterates through both slices and appends the smaller element
+to the result slice until one of the slices is exhausted.
+It then appends any remaining elements from the non-exhausted slice to the result.
+The function returns the merged and sorted slice.
+*/
+func merge2Sorted(a1, a2 []int) []int {
+	newArr := []int{}
+	l := 0
+	r := 0
+	for l < len(a1) && r < len(a2) {
+		if a1[l] < a2[r] {
+			newArr = append(newArr, a1[l])
+			l++
+		} else {
+			newArr = append(newArr, a2[r])
+			r++
+		}
+	}
+	if len(a1) > l {
+		newArr = append(newArr, a1[l+1:]...)
+	}
+	if len(a2) > r {
+		newArr = append(newArr, a2[r+1:]...)
+	}
+	return newArr
+}
+
+/*
+This function finds the missing number in a sequence of integers from 0 to n,
+where exactly one number is missing. It calculates the expected sum of the sequence
+using the formula for the sum of the first n natural numbers, then subtracts
+the actual sum of the provided numbers to determine the missing number.
+Note: This function has a mistake in the implementation.
+It should use the length of n to compute the last number and should correctly
+handle indexing and summing.
+*/
+func missingNumber(n []int) int {
+	sum := 0
+	lastNumber := n[len(n)-1]
+	for i := range lastNumber + 1 {
+		sum = sum + i
+	}
+	asum := 0
+	for _, i := range n {
+		asum = asum + i
+	}
+	return sum - asum
+}
+
+/*
+This function attempts to sort an integer slice arr in ascending order.
+It uses a simple but inefficient sorting approach similar to selection sort,
+where it repeatedly finds the minimum element from the unsorted portion of the array
+and swaps it with the current element. The function returns the sorted slice.
+Note: This implementation has a logical error and does not perform sorting correctly.
+*/
+func sort(arr []int) []int {
+	l := 0
+	for l < len(arr) {
+		for i := l; i < len(arr)-1; i++ { // {7, 1, 3, 5, 2, 6, 8, 4, 9}
+			if arr[l] > arr[i] {
+				temp := arr[l]
+				arr[l] = arr[i]
+				arr[i] = temp
+			}
+		}
+		l++
+	}
+	return arr
+}
+
+/*
+This function counts the number of vowels in the string s.
+It converts the string to a slice of runes and compares each rune
+against a predefined list of vowels ('a', 'e', 'i', 'o', 'u').
+It returns the total count of vowels found in the string.
+
+	Note: This implementation uses inefficient nested loops and can be optimized.
+*/
+func countVowels(s string) int {
+	arr := []rune(s)
+	var va [5]rune = [5]rune{'a', 'e', 'i', 'o', 'u'}
+	count := 0
+	for i := range arr {
+		for v := range va {
+			if arr[i] == va[v] {
+				count++
+			}
+		}
+	}
+	return count
+}
+
+/*
+This function counts the number of vowels in the string s using a map for efficient lookups.
+It converts the string to a slice of runes and checks each rune against a map
+where the keys are vowels ('a', 'e', 'i', 'o', 'u'). It returns the total count of vowels.
+This approach is more efficient compared to using nested loops.
+*/
+func countVowelsMap(s string) int {
+	arr := []rune(s)
+	vowMap := map[rune]bool{'a': true, 'e': true, 'i': true, 'o': true, 'u': true}
+	count := 0
+	for i := range arr {
+
+		if vowMap[arr[i]] {
+			count++
+		}
+	}
+	return count
+}
+
+/*
+This function performs a basic arithmetic calculation based on the input string s.
+The string should be in the format "a op b", where a and b are numbers and op is an operator (+, -, *, /).
+The function parses the numbers and operator from the string, performs the calculation,
+and returns the result as a float64. If parsing fails or the operator is unknown,
+the function returns 0.0.
+*/
+func cal(s string) float64 {
+	parts := strings.Split(s, " ")
+	a, err := strconv.ParseFloat(parts[0], 64)
+	if err != nil {
+		return 0.0
+	}
+	b, err := strconv.ParseFloat(parts[2], 64)
+	if err != nil {
+		return 0.0
+	}
+	switch parts[1] {
+	case "+":
+		return a + b
+	case "-":
+		return a - b
+	case "*":
+		return a * b
+	case "/":
+		return a / b
+
+	}
+	return 0.0
+}
+func main() {
+	fmt.Println(reverseString("BOTOBS"))
+	fmt.Println(factorial(5))
+	fmt.Println(isPrime(7))
+	fmt.Println(fibonacci(10))
+	fmt.Println(palindrome("BOOOB"))
+	fmt.Println(merge2Sorted([]int{2, 4, 6, 8, 10, 12, 14, 16}, []int{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14}))
+	fmt.Println(missingNumber([]int{0, 1, 2, 3, 4, 5, 6, 8, 9}))
+	fmt.Println(sort([]int{7, 1, 3, 5, 2, 6, 8, 4, 9}))
+	fmt.Println(countVowelsMap("Bbbddff"))
+	fmt.Println(cal("4 / 2"))
+}
+```
